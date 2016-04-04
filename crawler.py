@@ -82,5 +82,26 @@ def GetPhotoResolutions(page):
         result.add(pair)
     return result
 
+def TextContainsResolution(tag):
+    return re.match('.*\d+.* x .*\d+.*',tag.text)
 
+def GetVideoResolutions(page):
+    #still not ready!
+    if not type(page) is BeautifulSoup:
+        parsed_html = GetParsedHtml(page)
+    else:
+        parsed_html = page
+    res = parsed_html.find_all(TextContainsResolution)
+    result = set()
+    for tag in res:
+        str = tag.text
+        pair = [int(s) for s in str.split() if s.isdigit()]
+        pair = tuple(pair)
+        result.add(pair)
+    return result
+
+
+result = GetVideoResolutions('https://us.fotolia.com/id/106881017')
+for r in result:
+    print(r), print('---------')
 
