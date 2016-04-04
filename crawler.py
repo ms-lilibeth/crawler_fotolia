@@ -63,6 +63,24 @@ def GetKeywords(page):
     keywords_list = json.loads(text)
     return keywords_list
 
+def DescribesResolution(tag):
+    return (tag.has_attr('data-tab_group_id') and tag.has_attr('data-tab_panel_id')) \
+           and re.match('.*\d.*',tag.text)\
+           and (tag['data-tab_group_id']=='tabs_size_unit' and tag['data-tab_panel_id'] == 'pixels')
 
-print (GetKeywords('https://us.fotolia.com/id/106035423'))
+def GetPhotoResolutions(page):
+    if not type(page) is BeautifulSoup:
+        parsed_html = GetParsedHtml(page)
+    else:
+        parsed_html = page
+    tags_found = parsed_html.find_all(DescribesResolution)
+    result = set()
+    for tag in tags_found:
+        str = tag.text
+        pair = [int(s) for s in str.split() if s.isdigit()]
+        pair = tuple(pair)
+        result.add(pair)
+    return result
+
+
 
