@@ -2,6 +2,7 @@ import pycurl
 from io import BytesIO
 from bs4 import BeautifulSoup
 import re
+import json
 
 def GetParsedHtml(link):
     buffer = BytesIO()
@@ -44,20 +45,24 @@ def GetAllPhotoLinksOnPage(page):
     return metas_suitable
 
 
-def CollectData_Video(page):
-    # still not ready!
+def GetPortfolioItems(page):
+    #still not ready!
+    # Getting portfolio item id, type of media, id of media, title and description
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
     else:
         parsed_html = page
 
-def CollectData_Photo(page):
-    # still not ready!
+def GetKeywords(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
     else:
         parsed_html = page
+    tags_found = parsed_html.find_all('div',id='keywords_list')
+    text = tags_found[0].text
+    keywords_list = json.loads(text)
+    return keywords_list
 
 
-print(IsPhoto('https://us.fotolia.com/id/106035423'))
+print (GetKeywords('https://us.fotolia.com/id/106035423'))
 
