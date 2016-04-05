@@ -44,14 +44,26 @@ def GetAllPhotoLinksOnPage(page):
             metas_suitable.append(link.get('content'))
     return metas_suitable
 
-
-def GetPortfolioItems(page):
+def GetPortfolioItems(page, href=None):
     #still not ready!
-    # Getting portfolio item id, type of media, id of media, title and description
+    # Getting id of media, title and description
+    result = {}
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
+        href = page
     else:
         parsed_html = page
+        if href == None:
+            raise Exception("Pass the link as the second parameter")
+    # Finding media id
+    search_result = re.search("id/\d+",href)
+    if not search_result:
+        raise Exception("Cannot find media id in the link")
+    tmp_str = href[search_result.regs[0][0]:search_result.regs[0][1]]
+    search_result = re.search("\d+",tmp_str)
+    media_id =int(tmp_str[search_result.regs[0][0]:search_result.regs[0][1]])
+    result['media_id'] = media_id
+
 
 def GetKeywords(page):
     if not type(page) is BeautifulSoup:
@@ -86,7 +98,6 @@ def TextContainsResolution(tag):
     return re.match('.*\d+.* x .*\d+.*',tag.text)
 
 def GetVideoResolutions(page):
-    #still not ready!
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
     else:
@@ -101,7 +112,5 @@ def GetVideoResolutions(page):
     return result
 
 
-result = GetVideoResolutions('https://us.fotolia.com/id/106881017')
-for r in result:
-    print(r), print('---------')
-
+result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
+#GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
