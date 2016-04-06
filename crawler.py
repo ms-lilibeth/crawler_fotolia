@@ -43,7 +43,8 @@ def GetAllPhotoLinksOnPage(page):
         if exp.match(link.get('content')):
             metas_suitable.append(link.get('content'))
     return metas_suitable
-
+def ContainsTitle(tag):
+    return
 def GetPortfolioItems(page, href=None):
     #still not ready!
     # Getting id of media, title and description
@@ -63,6 +64,12 @@ def GetPortfolioItems(page, href=None):
     search_result = re.search("\d+",tmp_str)
     media_id =int(tmp_str[search_result.regs[0][0]:search_result.regs[0][1]])
     result['media_id'] = media_id
+    #Finding title
+    title_tags = parsed_html.find_all('h1', class_='content-title')
+    if title_tags.__len__() > 1:
+        raise Exception("Finding title: more than 1 title found")
+    result['title']=title_tags[0].text
+    return result
 
 
 def GetKeywords(page):
@@ -112,5 +119,6 @@ def GetVideoResolutions(page):
     return result
 
 
-result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
-#GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
+#result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
+result = GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
+print(result)
