@@ -136,8 +136,25 @@ def GetPhotoCategories(page):
     result = set()
     for tag in tags_found:
         result.add(tag.text)
+def GetVideoDuration(page):
+    if not type(page) is BeautifulSoup:
+        parsed_html = GetParsedHtml(page)
+    else:
+        parsed_html = page
+    tags_found = parsed_html.find_all('span',class_="thumb-video-duration")
+    result = {}
+    for tag in tags_found:
+        media_id = tag.parent.parent['href'][4:]
+        duration= tag.text.split(':')
+        print(duration)
+        min = int(duration[0])
+        sec = int(duration[1])
+        duration = min*60 + sec
+        result['media_id'] = duration
+    return result
 
 
-result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
-#result = GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
+#result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
+#result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
+GetVideoDuration('https://us.fotolia.com/p/202938145')
 # print(result)
