@@ -43,6 +43,14 @@ def GetAllPhotoLinksOnPage(page):
         if exp.match(link.get('content')):
             metas_suitable.append(link.get('content'))
     return metas_suitable
+def GetAuthorId(link):
+    search_result = re.search("p/\d+", link)
+    if not search_result:
+        raise Exception("Cannot find author id in the link")
+    tmp_str = link[search_result.regs[0][0]:search_result.regs[0][1]]
+    search_result = re.search("\d+", tmp_str)
+    author_id = int(tmp_str[search_result.regs[0][0]:search_result.regs[0][1]])
+    return author_id
 def ContainsTitle(tag):
     return
 def GetPortfolioItems(page, href=None):
@@ -156,5 +164,5 @@ def GetVideoDuration(page):
 
 #result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
 #result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
-GetVideoDuration('https://us.fotolia.com/p/202938145')
+print(GetAuthorId('https://us.fotolia.com/p/202938145'))
 # print(result)
