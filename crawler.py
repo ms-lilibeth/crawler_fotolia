@@ -46,7 +46,6 @@ def GetAllPhotoLinksOnPage(page):
 def ContainsTitle(tag):
     return
 def GetPortfolioItems(page, href=None):
-    #still not ready!
     # Getting id of media, title and description
     result = {}
     if not type(page) is BeautifulSoup:
@@ -65,10 +64,18 @@ def GetPortfolioItems(page, href=None):
     media_id =int(tmp_str[search_result.regs[0][0]:search_result.regs[0][1]])
     result['media_id'] = media_id
     #Finding title
-    title_tags = parsed_html.find_all('h1', class_='content-title')
-    if title_tags.__len__() > 1:
+    tags_found = parsed_html.find_all('h1', class_='content-title')
+    if tags_found.__len__() > 1:
         raise Exception("Finding title: more than 1 title found")
-    result['title']=title_tags[0].text
+    result['title']=tags_found[0].text
+    #Finding description
+    tags_found = parsed_html.find_all('div',attrs={'data-tab_group_id':"tabs_content_details",
+                                             'data-tab_panel_id':"description"})
+    desc_str = ""
+    for string in tags_found[0].strings:
+        desc_str += string
+    desc_str = desc_str[2:-2]
+    result['description']=desc_str
     return result
 
 
@@ -119,6 +126,6 @@ def GetVideoResolutions(page):
     return result
 
 
-#result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
-result = GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
+result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
+#result = GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
 print(result)
