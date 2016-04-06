@@ -124,8 +124,20 @@ def GetVideoResolutions(page):
         pair = tuple(pair)
         result.add(pair)
     return result
+def ContainsPhotoCategory(tag):
+    return tag.name=='a' \
+        and re.match('.*category.*',tag['href'],re.IGNORECASE)
+def GetPhotoCategories(page):
+    if not type(page) is BeautifulSoup:
+        parsed_html = GetParsedHtml(page)
+    else:
+        parsed_html = page
+    tags_found = parsed_html.find_all(ContainsPhotoCategory)
+    result = set()
+    for tag in tags_found:
+        result.add(tag.text)
 
 
-result = GetPortfolioItems('https://us.fotolia.com/id/106035736') #photo
+result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
 #result = GetPortfolioItems('https://us.fotolia.com/id/106881017') #video
-print(result)
+# print(result)
