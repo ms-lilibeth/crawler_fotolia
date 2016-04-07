@@ -15,7 +15,6 @@ def GetParsedHtml(link):
     html_doc = body.decode('iso-8859-1')
     soup = BeautifulSoup(html_doc, 'html.parser')
     return soup
-
 def IsPhoto(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
@@ -31,7 +30,7 @@ def IsPhoto(page):
             return False
     raise Exception("Cannot identify which type of content it is")
 
-def GetAllPhotoLinksOnPage(page):
+def GetAllMediaLinksOnPage(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
     else:
@@ -51,8 +50,6 @@ def GetAuthorId(link):
     search_result = re.search("\d+", tmp_str)
     author_id = int(tmp_str[search_result.regs[0][0]:search_result.regs[0][1]])
     return author_id
-def ContainsTitle(tag):
-    return
 def GetPortfolioItems(page, href=None):
     # Getting id of media, title and description
     result = {}
@@ -160,9 +157,26 @@ def GetVideoDuration(page):
         duration = min*60 + sec
         result['media_id'] = duration
     return result
-
+def GetNextPortfolioPage(current_page):
+    if not type(current_page) is BeautifulSoup:
+        parsed_html = GetParsedHtml(current_page)
+    else:
+        parsed_html = current_page
+    tags_found = parsed_html.find_all('span',class_='nav-page-link-item')
+    next_tag = tags_found[0].next_sibling.next_sibling
+    if next_tag.name == 'a' and next_tag['class'] == ['nav-page-link-item']:
+        return next_tag['href']
+    else:
+        return None
+domain = 'https://us.fotolia.com'
+portfolio_page = 'https://us.fotolia.com/p/202938145'
+portfolio_page = domain + GetNextPortfolioPage(portfolio_page)
+print(portfolio_page)
+# author_id = GetAuthorId(portfolio_page)
+# videos_duration = GetVideoDuration(portfolio_page)
+# media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
 
 #result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
 #result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
-print(GetAuthorId('https://us.fotolia.com/p/202938145'))
+
 # print(result)
