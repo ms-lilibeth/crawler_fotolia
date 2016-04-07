@@ -3,6 +3,8 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 import re
 import json
+import pymysql
+import time
 
 def GetParsedHtml(link):
     buffer = BytesIO()
@@ -169,10 +171,68 @@ def GetNextPortfolioPage(current_page):
         if re.match('.*next page.*',tag.text,re.IGNORECASE):
             return tag['href']
     return None
-def WriteToDatabase(dict):
-    for element in dict:
-        print(element," ",dict[element])
-    print('*************')
+def WriteToDatabase(info):
+    # Connect to the database
+    connection = pymysql.connect(host='localhost',
+                                 user='mlstudent4',
+                                 password='59a7752be0',
+                                 db='scraping',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+    try:
+        with connection.cursor() as cursor:
+            #Inserting portfolio items
+            sql = "DELETE FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s "
+            cursor.execute(sql,(info['author_id'],info['media_type'], info['media_id']))
+
+            sql = "INSERT INTO `portfolio_items` (`author_id`,`media_type`, `media_id`, `title`, `description`)" \
+                  " VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, (info['author_id'],info['media_type'],info['media_id'],info['title'],info['description']))
+
+            # Selecting pi_id
+            sql = "SELECT `pi_id` FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s"
+            cursor.execute(sql, (info['author_id'],info['media_type'], info['media_id']))
+            pi_id = cursor.fetchone()['pi_id']
+            print(pi_id)
+
+            #inserting keywords
+            sql = "DELETE FROM `items_keywords` WHERE `pi_id`=%s"
+            cursor.execute(sql, (pi_id))
+
+            for kw in info['keywords']:
+                sql = "INSERT INTO `items_keywords` (`pi_id`,`keyword`)" \
+                  " VALUES (%s, %s)"
+                cursor.execute(sql, (pi_id,kw))
+
+            #inserting resolutions
+            sql = "DELETE FROM `items_resolutions` WHERE `pi_id`=%s"
+            cursor.execute(sql, (pi_id))
+
+            for r in info['resolutions']:
+                str_to_insert = str(r[0]) + " x " + str(r[1])
+                sql = "INSERT INTO `items_resolutions` (`pi_id`,`resolution_size`)" \
+                      " VALUES (%s, %s)"
+                cursor.execute(sql, (pi_id, str_to_insert))
+
+            #inserting video duration and photo categories
+            if info['media_type']:
+                sql = "DELETE FROM `video_duration` WHERE `pi_id`=%s"
+                cursor.execute(sql, (pi_id))
+                sql = "INSERT INTO `video_duration` (`pi_id`,`duration`) VALUES (%s,%s)"
+                cursor.execute(sql,(pi_id,info['video_duration']))
+            else:
+                sql = "DELETE FROM `photos_categories` WHERE `pi_id`=%s"
+                cursor.execute(sql, (pi_id))
+
+                for cat in info['photo_categories']:
+                    sql = "INSERT INTO `photos_categories` (`pi_id`,`category_name`)" \
+                          " VALUES (%s, %s)"
+                    cursor.execute(sql, (pi_id, cat))
+        # connection is not autocommit by default. So you must commit to save
+        # your changes.
+        connection.commit()
+    finally:
+        connection.close()
 
 domain = 'https://us.fotolia.com'
 portfolio_page = 'https://us.fotolia.com/p/202938145'
@@ -183,7 +243,8 @@ media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
 while portfolio_page != None:
     inc_tmp=1;
     for media_link in media_pages_links:
-        print(inc_tmp, " " ,media_link)
+        with open("links_parsed","a") as f:
+            f.write(media_link)
         inc_tmp+=1
         media_page = GetParsedHtml(media_link) #for not to parse every time
         info = GetPortfolioItems(media_page,media_link)
@@ -199,14 +260,9 @@ while portfolio_page != None:
             media_id = info['media_id']
             info['video_duration'] = videos_duration[media_id]
         WriteToDatabase(info)
+        time.sleep(1)
     next_page = GetNextPortfolioPage(portfolio_page)
     if next_page != None:
         portfolio_page = domain + next_page
     else:
         portfolio_page = None
-    print('GOING TO THE NEXT PAGE')
-
-
-#result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
-
-# print(result)
