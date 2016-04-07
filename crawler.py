@@ -36,7 +36,7 @@ def GetAllMediaLinksOnPage(page):
     else:
         parsed_html = page
     metas = parsed_html.find_all('meta')
-    exp = re.compile('https.+id.')
+    exp = re.compile('https://us\.fotolia\.com/id.')
     metas_suitable = []
     for link in metas:
         if exp.match(link.get('content')):
@@ -99,6 +99,7 @@ def DescribesResolution(tag):
            and re.match('.*\d.*',tag.text)\
            and (tag['data-tab_group_id']=='tabs_size_unit' and tag['data-tab_panel_id'] == 'pixels')
 
+#returns set
 def GetPhotoResolutions(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
@@ -116,6 +117,7 @@ def GetPhotoResolutions(page):
 def TextContainsResolution(tag):
     return re.match('.*\d+.* x .*\d+.*',tag.text)
 
+#returns set
 def GetVideoResolutions(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
@@ -141,6 +143,7 @@ def GetPhotoCategories(page):
     result = set()
     for tag in tags_found:
         result.add(tag.text)
+    return result
 def GetVideoDuration(page):
     if not type(page) is BeautifulSoup:
         parsed_html = GetParsedHtml(page)
@@ -154,7 +157,7 @@ def GetVideoDuration(page):
         min = int(duration[0])
         sec = int(duration[1])
         duration = min*60 + sec
-        result['media_id'] = duration
+        result[int(media_id)] = duration
     return result
 def GetNextPortfolioPage(current_page):
     if not type(current_page) is BeautifulSoup:
@@ -166,28 +169,44 @@ def GetNextPortfolioPage(current_page):
         if re.match('.*next page.*',tag.text,re.IGNORECASE):
             return tag['href']
     return None
+def WriteToDatabase(dict):
+    for element in dict:
+        print(element," ",dict[element])
+    print('*************')
 
-    # tags_found = parsed_html.find_all('span',class_='nav-page-link-item')
-    # next_tag = tags_found[0].next_sibling.next_sibling
-    # if next_tag.name == 'a' and next_tag['class'] == ['nav-page-link-item']:
-    #     return next_tag['href']
-    # else:
-    #     return None
 domain = 'https://us.fotolia.com'
 portfolio_page = 'https://us.fotolia.com/p/202938145'
 
-# author_id = GetAuthorId(portfolio_page)
-# videos_duration = GetVideoDuration(portfolio_page)
-# media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
-next_page = GetNextPortfolioPage(portfolio_page)
-if next_page != None:
-    portfolio_page = domain + next_page
-    print(portfolio_page)
-else:
-    print('None')
+author_id = GetAuthorId(portfolio_page)
+videos_duration = GetVideoDuration(portfolio_page)
+media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
+while portfolio_page != None:
+    inc_tmp=1;
+    for media_link in media_pages_links:
+        print(inc_tmp, " " ,media_link)
+        inc_tmp+=1
+        media_page = GetParsedHtml(media_link) #for not to parse every time
+        info = GetPortfolioItems(media_page,media_link)
+        info['keywords'] = GetKeywords(media_page)
+        info['author_id'] = author_id
+        if IsPhoto(media_page):
+            info['media_type'] = 0
+            info['resolutions'] = GetPhotoResolutions(media_page)
+            info['photo_categories'] = GetPhotoCategories(media_page)
+        else:
+            info['media_type'] = 1
+            info['resolutions'] = GetVideoResolutions(media_page)
+            media_id = info['media_id']
+            info['video_duration'] = videos_duration[media_id]
+        WriteToDatabase(info)
+    next_page = GetNextPortfolioPage(portfolio_page)
+    if next_page != None:
+        portfolio_page = domain + next_page
+    else:
+        portfolio_page = None
+    print('GOING TO THE NEXT PAGE')
 
 
-    #result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
 #result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
 
 # print(result)
