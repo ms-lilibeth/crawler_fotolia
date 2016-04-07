@@ -181,20 +181,19 @@ def WriteToDatabase(info):
                                  cursorclass=pymysql.cursors.DictCursor)
     try:
         with connection.cursor() as cursor:
-            #Inserting portfolio items
-            sql = "DELETE FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s "
-            cursor.execute(sql,(info['author_id'],info['media_type'], info['media_id']))
-
-            sql = "INSERT INTO `portfolio_items` (`author_id`,`media_type`, `media_id`, `title`, `description`)" \
-                  " VALUES (%s, %s, %s, %s, %s)"
-            cursor.execute(sql, (info['author_id'],info['media_type'],info['media_id'],info['title'],info['description']))
-
-            # Selecting pi_id
+                        # Selecting pi_id
             sql = "SELECT `pi_id` FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s"
             cursor.execute(sql, (info['author_id'],info['media_type'], info['media_id']))
             pi_id = cursor.fetchone()['pi_id']
-            print(pi_id)
 
+            # Inserting portfolio items
+            sql = "DELETE FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s "
+            cursor.execute(sql, (info['author_id'], info['media_type'], info['media_id']))
+
+            sql = "INSERT INTO `portfolio_items` (`author_id`,`media_type`, `media_id`, `title`, `description`)" \
+                  " VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, (
+            info['author_id'], info['media_type'], info['media_id'], info['title'], info['description']))
             #inserting keywords
             sql = "DELETE FROM `items_keywords` WHERE `pi_id`=%s"
             cursor.execute(sql, (pi_id))
@@ -245,6 +244,7 @@ while portfolio_page != None:
     for media_link in media_pages_links:
         with open("links_parsed","a") as f:
             f.write(media_link)
+            f.write("\n")
         inc_tmp+=1
         media_page = GetParsedHtml(media_link) #for not to parse every time
         info = GetPortfolioItems(media_page,media_link)
