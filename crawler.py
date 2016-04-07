@@ -151,7 +151,6 @@ def GetVideoDuration(page):
     for tag in tags_found:
         media_id = tag.parent.parent['href'][4:]
         duration= tag.text.split(':')
-        print(duration)
         min = int(duration[0])
         sec = int(duration[1])
         duration = min*60 + sec
@@ -162,21 +161,33 @@ def GetNextPortfolioPage(current_page):
         parsed_html = GetParsedHtml(current_page)
     else:
         parsed_html = current_page
-    tags_found = parsed_html.find_all('span',class_='nav-page-link-item')
-    next_tag = tags_found[0].next_sibling.next_sibling
-    if next_tag.name == 'a' and next_tag['class'] == ['nav-page-link-item']:
-        return next_tag['href']
-    else:
-        return None
+    tags_found = parsed_html.find_all('a', class_='button')
+    for tag in tags_found:
+        if re.match('.*next page.*',tag.text,re.IGNORECASE):
+            return tag['href']
+    return None
+
+    # tags_found = parsed_html.find_all('span',class_='nav-page-link-item')
+    # next_tag = tags_found[0].next_sibling.next_sibling
+    # if next_tag.name == 'a' and next_tag['class'] == ['nav-page-link-item']:
+    #     return next_tag['href']
+    # else:
+    #     return None
 domain = 'https://us.fotolia.com'
 portfolio_page = 'https://us.fotolia.com/p/202938145'
-portfolio_page = domain + GetNextPortfolioPage(portfolio_page)
-print(portfolio_page)
+
 # author_id = GetAuthorId(portfolio_page)
 # videos_duration = GetVideoDuration(portfolio_page)
 # media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
+next_page = GetNextPortfolioPage(portfolio_page)
+if next_page != None:
+    portfolio_page = domain + next_page
+    print(portfolio_page)
+else:
+    print('None')
 
-#result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
+
+    #result = GetPhotoCategories('https://us.fotolia.com/id/77516643') #photo
 #result = GetVideoDuration('https://us.fotolia.com/id/106881017') #video
 
 # print(result)
