@@ -5,6 +5,7 @@ import re
 import json
 import pymysql
 import time
+import sys
 
 def GetParsedHtml(link):
     buffer = BytesIO()
@@ -172,6 +173,7 @@ def GetNextPortfolioPage(current_page):
             return tag['href']
     return None
 def WriteToDatabase(info):
+
     # Connect to the database
     connection = pymysql.connect(host='localhost',
                                  user='mlstudent4',
@@ -181,11 +183,6 @@ def WriteToDatabase(info):
                                  cursorclass=pymysql.cursors.DictCursor)
     try:
         with connection.cursor() as cursor:
-                        # Selecting pi_id
-            sql = "SELECT `pi_id` FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s"
-            cursor.execute(sql, (info['author_id'],info['media_type'], info['media_id']))
-            pi_id = cursor.fetchone()['pi_id']
-
             # Inserting portfolio items
             sql = "DELETE FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s "
             cursor.execute(sql, (info['author_id'], info['media_type'], info['media_id']))
@@ -194,6 +191,12 @@ def WriteToDatabase(info):
                   " VALUES (%s, %s, %s, %s, %s)"
             cursor.execute(sql, (
             info['author_id'], info['media_type'], info['media_id'], info['title'], info['description']))
+
+            # Selecting pi_id
+            sql = "SELECT `pi_id` FROM `portfolio_items` WHERE `author_id`=%s AND `media_type`=%s AND `media_id`=%s"
+            cursor.execute(sql, (info['author_id'], info['media_type'], info['media_id']))
+            pi_id = cursor.fetchone()['pi_id']
+
             #inserting keywords
             sql = "DELETE FROM `items_keywords` WHERE `pi_id`=%s"
             cursor.execute(sql, (pi_id))
@@ -230,22 +233,25 @@ def WriteToDatabase(info):
         # connection is not autocommit by default. So you must commit to save
         # your changes.
         connection.commit()
-    finally:
-        connection.close()
+    except:
+        e = sys.exc_info()[0]
+        print("<p>Error: %s</p>" % e)
+    # finally:
+    #     connection.close()
 
 domain = 'https://us.fotolia.com'
 portfolio_page = 'https://us.fotolia.com/p/202938145'
 
 author_id = GetAuthorId(portfolio_page)
-videos_duration = GetVideoDuration(portfolio_page)
-media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
+
+
 while portfolio_page != None:
-    inc_tmp=1;
+    media_pages_links = GetAllMediaLinksOnPage(portfolio_page)
+    videos_duration = GetVideoDuration(portfolio_page)
     for media_link in media_pages_links:
         with open("links_parsed","a") as f:
             f.write(media_link)
             f.write("\n")
-        inc_tmp+=1
         media_page = GetParsedHtml(media_link) #for not to parse every time
         info = GetPortfolioItems(media_page,media_link)
         info['keywords'] = GetKeywords(media_page)
